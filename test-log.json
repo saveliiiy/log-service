@@ -1,0 +1,10 @@
+{
+    "logs": [
+        {
+            "timestamp": "2026-03-06T22:30:45Z",
+            "level": "error",
+            "service": "auth-service",
+            "message": "Test message"
+        }
+    ]
+}

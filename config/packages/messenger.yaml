@@ -1,0 +1,20 @@
+framework:
+    messenger:
+        transports:
+            logs_ingest:
+                dsn: '%env(RABBITMQ_DSN)%'
+                options:
+                    exchange:
+                        name: logs
+                        type: direct
+                        durable: true
+                    queues:
+                        logs_ingest:
+                            binding_keys: ['logs.ingest']
+                            durable: true
+                            arguments:
+                                x-max-priority: 10
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
