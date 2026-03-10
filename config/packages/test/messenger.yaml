@@ -2,3 +2,5 @@ framework:
     messenger:
         transports:
             logs_ingest: 'in-memory://'
+        routing:
+            'App\Message\LogMessage': logs_ingest

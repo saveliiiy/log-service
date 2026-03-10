@@ -5,8 +5,7 @@
       <list>
         <option value="$PROJECT_DIR$/log-service/tests/Unit" />
         <option value="$PROJECT_DIR$/log-service/tests/Integration" />
-        <option value="$PROJECT_DIR$/tests/Unit" />
-        <option value="$PROJECT_DIR$/tests/Integration" />
+        <option value="$PROJECT_DIR$/tests" />
       </list>
     </option>
   </component>

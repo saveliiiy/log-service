@@ -47,9 +47,9 @@ class LogIngestionControllerTest extends WebTestCase
         $this->assertArrayHasKey('logs_count', $response);
         $this->assertEquals(1, $response['logs_count']);
 
-        // Получаем транспорт из контейнера ПОСЛЕ createClient()
         $transport = self::getContainer()->get('messenger.transport.logs_ingest');
         $this->assertInstanceOf(InMemoryTransport::class, $transport);
+        $this->assertCount(1, $transport->get());
     }
 
     public function testBatchWithMultipleLogs(): void
@@ -107,28 +107,33 @@ class LogIngestionControllerTest extends WebTestCase
             '/api/logs/ingest',
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_ACCEPT' => 'application/json'
+            ],
             json_encode($payload)
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $this->assertResponseHeaderSame('Content-Type', 'application/json');
 
-        $this->assertArrayHasKey('errors', $response);
-        $this->assertIsArray($response['errors']);
+        $response = json_decode($client->getResponse()->getContent(), true);
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('type', $response);
+        $this->assertArrayHasKey('title', $response);
+        $this->assertArrayHasKey('status', $response);
+        $this->assertEquals(400, $response['status']);
+        $this->assertArrayHasKey('detail', $response);
+        $this->assertArrayHasKey('violations', $response);
+        $this->assertIsArray($response['violations']);
+        $this->assertNotEmpty($response['violations']);
+
+        // Проверим, что есть хотя бы одно нарушение
+        $this->assertGreaterThan(0, count($response['violations']));
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
-
-        // Очищаем транспорт после каждого теста
-        if (self::$container) {
-            $transport = self::getContainer()->get('messenger.transport.logs_ingest');
-            if ($transport instanceof InMemoryTransport) {
-                // Очищаем очередь
-                $transport->reset();
-            }
-        }
     }
 }
