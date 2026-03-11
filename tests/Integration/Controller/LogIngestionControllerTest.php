@@ -2,16 +2,15 @@
 
 namespace App\Tests\Integration\Controller;
 
+use JsonException;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 
 class LogIngestionControllerTest extends WebTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-    }
-
+    /**
+     * @throws JsonException
+     */
     public function testSuccessfulIngestion(): void
     {
         $client = static::createClient();
@@ -35,14 +34,14 @@ class LogIngestionControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode($payload)
+            json_encode($payload, JSON_THROW_ON_ERROR)
         );
 
         // Проверяем статус
-        $this->assertResponseStatusCodeSame(202);
+        self::assertResponseStatusCodeSame(202);
 
         // Проверяем структуру ответа
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertArrayHasKey('batch_id', $response);
         $this->assertArrayHasKey('logs_count', $response);
         $this->assertEquals(1, $response['logs_count']);
@@ -52,6 +51,9 @@ class LogIngestionControllerTest extends WebTestCase
         $this->assertCount(1, $transport->get());
     }
 
+    /**
+     * @throws JsonException
+     */
     public function testBatchWithMultipleLogs(): void
     {
         $client = static::createClient();
@@ -62,7 +64,7 @@ class LogIngestionControllerTest extends WebTestCase
                 'timestamp' => '2026-02-26T10:30:45Z',
                 'level' => 'error',
                 'service' => 'auth-service',
-                'message' => "Test message {$i}"
+                'message' => "Test message $i"
             ];
         }
 
@@ -74,12 +76,12 @@ class LogIngestionControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode($payload)
+            json_encode($payload, JSON_THROW_ON_ERROR)
         );
 
-        $this->assertResponseStatusCodeSame(202);
+        self::assertResponseStatusCodeSame(202);
 
-        $response = json_decode($client->getResponse()->getContent(), true);
+        $response = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals(5, $response['logs_count']);
 
         // Проверяем количество сообщений в очереди
@@ -87,6 +89,9 @@ class LogIngestionControllerTest extends WebTestCase
         $this->assertCount(5, $transport->get());
     }
 
+    /**
+     * @throws JsonException
+     */
     public function testValidationError(): void
     {
         $client = static::createClient();
@@ -111,29 +116,20 @@ class LogIngestionControllerTest extends WebTestCase
                 'CONTENT_TYPE' => 'application/json',
                 'HTTP_ACCEPT' => 'application/json'
             ],
-            json_encode($payload)
+            json_encode($payload, JSON_THROW_ON_ERROR)
         );
 
-        $this->assertResponseStatusCodeSame(400);
-        $this->assertResponseHeaderSame('Content-Type', 'application/json');
+        self::assertResponseStatusCodeSame(400);
+        self::assertResponseHeaderSame('Content-Type', 'application/json');
 
-        $response = json_decode($client->getResponse()->getContent(), true);
-        $this->assertIsArray($response);
-        $this->assertArrayHasKey('type', $response);
-        $this->assertArrayHasKey('title', $response);
-        $this->assertArrayHasKey('status', $response);
+        $response = json_decode($client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertEquals(400, $response['status']);
+        $this->assertEquals('https://symfony.com/errors/validation', $response['type']);
+        $this->assertEquals('Validation Failed', $response['title']);
         $this->assertArrayHasKey('detail', $response);
-        $this->assertArrayHasKey('violations', $response);
         $this->assertIsArray($response['violations']);
-        $this->assertNotEmpty($response['violations']);
 
         // Проверим, что есть хотя бы одно нарушение
         $this->assertGreaterThan(0, count($response['violations']));
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
     }
 }

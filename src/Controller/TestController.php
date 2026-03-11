@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\DTO\IngestLogsRequest;
+use App\DTO\IngestLogsRequestDTO;
 use App\Service\LogProcessor;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -43,7 +43,7 @@ class TestController extends AbstractController
 
         try {
             // Создаем DTO
-            $ingestRequest = new IngestLogsRequest($data['logs'] ?? []);
+            $ingestRequest = new IngestLogsRequestDTO($data['logs'] ?? []);
 
             // Валидируем
             $errors = $this->validator->validate($ingestRequest);
@@ -81,22 +81,5 @@ class TestController extends AbstractController
                 'trace' => $e->getTraceAsString()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    #[Route('/test', name: 'test_index', methods: ['GET'])]
-    public function index(): JsonResponse
-    {
-        return new JsonResponse([
-            'service' => 'Log Service API',
-            'version' => '1.0',
-            'endpoints' => [
-                'GET /test' => 'This info',
-                'GET /test/logs/ingest' => 'Test ingest endpoint (GET)',
-                'POST /api/logs/ingest' => 'Main API endpoint for sending logs'
-            ],
-            'test_with_curl' => [
-                'curl -X POST http://localhost:8080/api/logs/ingest -H "Content-Type: application/json" -d \'{"logs":[{"timestamp":"2026-02-26T10:30:45Z","level":"error","service":"test","message":"hello"}]}\''
-            ]
-        ]);
     }
 }

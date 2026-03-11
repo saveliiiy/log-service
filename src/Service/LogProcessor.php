@@ -2,7 +2,8 @@
 
 namespace App\Service;
 
-use App\DTO\IngestLogsRequest;
+use App\DTO\IngestLogsRequestDTO;
+use App\Enum\LogLevel;
 use App\Message\LogMessage;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
@@ -13,18 +14,13 @@ readonly class LogProcessor
         private MessageBusInterface $bus
     ) {}
 
-    public function process(IngestLogsRequest $request): array
+    public function process(IngestLogsRequestDTO $request): array
     {
         $batchId = Uuid::v4()->toRfc4122();
         $publishedAt = new \DateTimeImmutable();
 
         foreach ($request->logs as $logData) {
-            $priority = match($logData['level']) {
-                'emergency', 'alert', 'critical' => 10,
-                'error' => 8,
-                'warning' => 5,
-                default => 1,
-            };
+            $priority = LogLevel::getPriorityForLevel($logData['level']);
 
             $message = new LogMessage(
                 batchId: $batchId,

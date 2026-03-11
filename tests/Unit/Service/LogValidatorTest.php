@@ -2,13 +2,14 @@
 
 namespace App\Tests\Unit\Service;
 
-use App\DTO\IngestLogsRequest;
+use App\DTO\IngestLogsRequestDTO;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Validator\Validation;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class LogValidatorTest extends KernelTestCase
 {
-    private $validator;
+    private ValidatorInterface $validator;
 
     protected function setUp(): void
     {
@@ -30,7 +31,7 @@ class LogValidatorTest extends KernelTestCase
             ]
         ];
 
-        $request = new IngestLogsRequest($data['logs']);
+        $request = new IngestLogsRequestDTO($data['logs']);
         $errors = $this->validator->validate($request);
 
         $this->assertCount(0, $errors);
@@ -49,7 +50,7 @@ class LogValidatorTest extends KernelTestCase
             ]
         ];
 
-        $request = new IngestLogsRequest($data['logs']);
+        $request = new IngestLogsRequestDTO($data['logs']);
         $errors = $this->validator->validate($request);
 
         $this->assertGreaterThan(0, count($errors));

@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\DTO\IngestLogsRequest;
+use App\DTO\IngestLogsRequestDTO;
 use App\Service\LogProcessor;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +15,7 @@ readonly class LogIngestionController
     public function __construct(private LogProcessor $logProcessor) {}
 
     #[Route('/ingest', name: 'logs_ingest', methods: ['POST'])]
-    public function ingest(#[MapRequestPayload(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)] IngestLogsRequest $request): JsonResponse
+    public function ingest(#[MapRequestPayload(validationFailedStatusCode: Response::HTTP_BAD_REQUEST)] IngestLogsRequestDTO $request): JsonResponse
     {
         $result = $this->logProcessor->process($request);
 
